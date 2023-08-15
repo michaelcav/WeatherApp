@@ -1,4 +1,4 @@
-import React, { useState, useCallback} from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MagnifyingGlassIcon, XMarkIcon } from 'react-native-heroicons/outline'
@@ -6,8 +6,8 @@ import { CalendarDaysIcon, MapPinIcon } from 'react-native-heroicons/solid'
 import { StatusBar } from 'expo-status-bar'
 import { Image } from 'react-native';
 import { theme } from '../theme/index'
-import {debounce} from 'lodash'
-import {fetchLocations, fetchWeatherForecast} from '../api/weather'
+import { debounce } from 'lodash'
+import { fetchLocations, fetchWeatherForecast } from '../api/weather'
 import { weatherImages } from '../constants';
 
 interface infoLoc {
@@ -23,14 +23,14 @@ interface infoLoc {
 
 interface currentType {
   last_updated_epoch: number,
-        last_updated: number,
-         temp_c :number,
-        temp_f : number,
-        is_day : number,
-        condition : string | number
+  last_updated: number,
+  temp_c: number,
+  temp_f: number,
+  is_day: number,
+  condition: string | number
 }
 
-interface  WeatherType {
+interface WeatherType {
   current: currentType;
   location: infoLoc
 }
@@ -39,7 +39,9 @@ interface  WeatherType {
 const HomeScreen: React.FC = () => {
   const [showSearch, toggleSearch] = useState(false)
   const [locations, setLocations] = useState<infoLoc[]>([])
-  const [weather, setWeather] = useState<{[key: string]: any}>({})
+  const [loading, setLoading] = useState(true);
+  const [weather, setWeather] = useState<{ [key: string]: any }>({})
+
 
   const handleLocation = (loc: infoLoc) => {
     console.log('location: ', loc)
@@ -48,25 +50,40 @@ const HomeScreen: React.FC = () => {
     fetchWeatherForecast({
       cityName: loc.name,
       days: '7'
-    }).then(data=>{
+    }).then(data => {
       setWeather(data)
       console.log('got forecast: ', data)
     })
   }
 
-  const handleSearch = (value: string )=> {
-    if (value.length>2){
-      fetchLocations({cityName: value}).then((data:any)=>{
+  const handleSearch = (value: string) => {
+    if (value.length > 2) {
+      fetchLocations({ cityName: value }).then((data: any) => {
         setLocations(data)
         console.log(data)
       })
     }
   }
- 
+
+  useEffect(()=>{
+    fetchMyWeatherData();
+  },[]);
+
+  const fetchMyWeatherData = async ()=>{
+    let cityName = 'Porto Alegre';
+    fetchWeatherForecast({
+      cityName,
+      days: '7'
+    }).then(data=>{
+      // console.log('got data: ',data.forecast.forecastday);
+      setWeather(data);
+      setLoading(false);
+    })
+   }
 
   const handleTextDebounce = useCallback(debounce(handleSearch, 1200), [])
 
-  const {current, location } = weather;
+  const { current, location } = weather;
 
   return (
     <View className='flex-1 relative'>
@@ -76,13 +93,13 @@ const HomeScreen: React.FC = () => {
       />
       <SafeAreaView className='flex flex-1'>
         {/* Search section */}
-        <View style={{ height: '7%' }} className='mx-4 relative z-50'>
+        <View style={{ height: '7%' }} className='mx-4 relative z-50 mt-4'>
           <View className='flex-row justify-end items-center rounded-full'
             style={{ backgroundColor: showSearch ? theme.bgWhite(0.2) : 'transparent' }}>
             {
               showSearch ? (
                 <TextInput
-                onChangeText={handleTextDebounce}
+                  onChangeText={handleTextDebounce}
                   placeholder='Search City'
                   placeholderTextColor={'lightgray'}
                   className='pl-6 h-10 pb-1 flex-1 text-base  text-white'
@@ -124,13 +141,13 @@ const HomeScreen: React.FC = () => {
         {/* forecast selection */}
         <View className='mx-4 flex justify-around flex-1 mb-2'>
           {/* location */}
-          <Text className='text-white text-center text-2xl font-bold'>{location?.name}, 
+          <Text className='text-white text-center text-2xl font-bold'>{location?.name},
             <Text className='text-lg font-semibold text-gray-300'> {location?.country}</Text>
           </Text>
           {/* weather image */}
           <View className='flex-row justify-center'>
             <Image
-              source={weatherImages[current?.condition?.text || 'other']} 
+              source={weatherImages[current?.condition?.text || 'other']}
               className="w-52 h-52" />
           </View>
           {/* degree celcius */}
@@ -159,7 +176,7 @@ const HomeScreen: React.FC = () => {
               <Image source={require('../assets/icons/sun.png')}
                 className='w-6 h-6'
               />
-              <Text className='text-white font-semibold text-base'>{}</Text>
+              <Text className='text-white font-semibold text-base'>{ weather?.forecast?.forecastday[0]?.astro?.sunrise }</Text>
             </View>
           </View>
         </View>
@@ -168,32 +185,35 @@ const HomeScreen: React.FC = () => {
         <View className='mb-2 space-y-3'>
           <View className='flex-row items-center mx-5 space-x-2'>
             <CalendarDaysIcon size='22' color='white' />
-            <Text className='text-white text-base'> Daily forcast</Text>
+            <Text className='text-white text-base'> Próximos dias</Text>
           </View>
           <ScrollView
             horizontal
             contentContainerStyle={{ paddingHorizontal: 15 }}
             showsVerticalScrollIndicator={false}
           >
-           {
-            
-            weather?.forecast?.forecastday?.map((item , index) =>
             {
-              return (
-                <View 
-                key={index}
-                className='flex justify-center items-center w-24 rounded-3xl py-3 space-y-1 mr-4'
-                style={{ backgroundColor: theme.bgWhite(0.15) }}
-              >
-                <Image source={weatherImages[item?.day?.condition?.text]}
-                  className='h-11 w-11'
-                />
-                <Text className='text-white'>{item.date}</Text>
-                <Text className='text-white text-xl font-semibold'>{item?.day.avgtemp_c}&#176;</Text>
-              </View>
-              )
-            })
-           }
+
+              weather?.forecast?.forecastday?.map((item: any, index: any) => {
+                let date = new Date(item.date)
+                let options = {weekday: 'long'}
+                let dayName = date.toLocaleDateString('pt-BR', options)
+                dayName = dayName.split(',')[0]
+                return (
+                  <View
+                    key={index}
+                    className='flex justify-center items-center w-24 rounded-3xl py-3 space-y-1 mr-4 mb-4'
+                    style={{ backgroundColor: theme.bgWhite(0.15) }}
+                  >
+                    <Image source={weatherImages[item?.day?.condition?.text]}
+                      className='h-11 w-11'
+                    />
+                    <Text className='text-white'>{dayName}</Text>
+                    <Text className='text-white text-xl font-semibold'>{item?.day.avgtemp_c}&#176;</Text>
+                  </View>
+                )
+              })
+            }
           </ScrollView>
         </View>
       </SafeAreaView>
