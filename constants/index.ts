@@ -1,6 +1,10 @@
 export const apiKey = 'd4cbea8e0e5f4746bd754323231208';
 
-export const weatherImages = {
+interface WeatherImages {
+    [key: string]: any;
+}
+
+export const weatherImages: WeatherImages = {
     'Partly cloudy': require('../assets/images/partlycloudy.png'),
     'Moderate rain': require('../assets/images/moderaterain.png'),
     'Patchy rain possible': require('../assets/images/moderaterain.png'),
@@ -17,4 +21,4 @@ export const weatherImages = {
     'Moderate or heavy rain with thunder': require('../assets/images/heavyrain.png'),
     'Mist': require('../assets/images/mist.png'),
     'other': require('../assets/images/moderaterain.png')
-}
+};

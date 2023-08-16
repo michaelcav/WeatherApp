@@ -9,38 +9,17 @@ import { theme } from '../theme/index'
 import { debounce } from 'lodash'
 import { fetchLocations, fetchWeatherForecast } from '../api/weather'
 import { weatherImages } from '../constants';
+import { WeatherType, infoLoc, Weather } from '../Types'
 
-interface infoLoc {
-  name: string,
-  region: string,
-  country: string,
-  lat: number,
-  lon: number,
-  tz_id: string,
-  localtime_epoch: number,
-  localtime: string,
-};
-
-interface currentType {
-  last_updated_epoch: number,
-  last_updated: number,
-  temp_c: number,
-  temp_f: number,
-  is_day: number,
-  condition: string | number
-}
-
-interface WeatherType {
-  current: currentType;
-  location: infoLoc
-}
 
 
 const HomeScreen: React.FC = () => {
   const [showSearch, toggleSearch] = useState(false)
   const [locations, setLocations] = useState<infoLoc[]>([])
   const [loading, setLoading] = useState(true);
-  const [weather, setWeather] = useState<{ [key: string]: any }>({})
+  const [weather, setWeather] = useState<WeatherType>({
+
+  });
 
 
   const handleLocation = (loc: infoLoc) => {
@@ -58,32 +37,33 @@ const HomeScreen: React.FC = () => {
 
   const handleSearch = (value: string) => {
     if (value.length > 2) {
-      fetchLocations({ cityName: value }).then((data: any) => {
+      fetchLocations({ cityName: value }).then((data) => {
         setLocations(data)
         console.log(data)
       })
     }
   }
 
-  useEffect(()=>{
+  useEffect(() => {
     fetchMyWeatherData();
-  },[]);
+  }, []);
 
-  const fetchMyWeatherData = async ()=>{
+  const fetchMyWeatherData = async () => {
     let cityName = 'Porto Alegre';
     fetchWeatherForecast({
       cityName,
       days: '7'
-    }).then(data=>{
+    }).then(data => {
       // console.log('got data: ',data.forecast.forecastday);
       setWeather(data);
       setLoading(false);
     })
-   }
+  }
 
   const handleTextDebounce = useCallback(debounce(handleSearch, 1200), [])
 
   const { current, location } = weather;
+
 
   return (
     <View className='flex-1 relative'>
@@ -176,7 +156,7 @@ const HomeScreen: React.FC = () => {
               <Image source={require('../assets/icons/sun.png')}
                 className='w-6 h-6'
               />
-              <Text className='text-white font-semibold text-base'>{ weather?.forecast?.forecastday[0]?.astro?.sunrise }</Text>
+              <Text className='text-white font-semibold text-base'>{weather?.forecast?.forecastday[0]?.astro?.sunrise}</Text>
             </View>
           </View>
         </View>
@@ -196,7 +176,7 @@ const HomeScreen: React.FC = () => {
 
               weather?.forecast?.forecastday?.map((item: any, index: any) => {
                 let date = new Date(item.date)
-                let options = {weekday: 'long'}
+                let options = { weekday: 'long' }
                 let dayName = date.toLocaleDateString('pt-BR', options)
                 dayName = dayName.split(',')[0]
                 return (
