@@ -9,7 +9,7 @@ import { theme } from '../theme/index'
 import { debounce } from 'lodash'
 import { fetchLocations, fetchWeatherForecast } from '../api/weather'
 import { weatherImages } from '../constants';
-import { WeatherType, infoLoc, Weather } from '../Types'
+import { WeatherType, infoLoc } from '../Types'
 
 
 
@@ -17,9 +17,7 @@ const HomeScreen: React.FC = () => {
   const [showSearch, toggleSearch] = useState(false)
   const [locations, setLocations] = useState<infoLoc[]>([])
   const [loading, setLoading] = useState(true);
-  const [weather, setWeather] = useState<WeatherType>({
-
-  });
+  const [weather, setWeather] = useState<WeatherType>({} as WeatherType);
 
 
   const handleLocation = (loc: infoLoc) => {
